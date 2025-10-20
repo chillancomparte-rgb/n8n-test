@@ -1,0 +1,57 @@
+services:
+  # 1. La Base de Datos PostgreSQL
+  - type: pserv
+    name: n8n-db
+    plan: free # Puedes cambiarlo a 'starter' si necesitas más potencia
+    databaseName: n8n
+    databaseUser: n8n_user
+    region: oregon # Puedes elegir la región más cercana
+
+  # 2. El Servicio Web de n8n
+  - type: web
+    name: n8n
+    plan: free # Empieza con 'free', pero n8n recomienda 'starter'
+    region: oregon # Usa la misma región que la base de datos
+    image:
+      url: n8nio/n8n:latest
+    healthCheckPath: /healthz
+    envVars:
+      # Conexión a la base de datos (Render la inyecta automáticamente)
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_DATABASE
+        fromService:
+          type: pserv
+          name: n8n-db
+          property: databaseName
+      - key: DB_POSTGGRESDB_HOST
+        fromService:
+          type: pserv
+          name: n8n-db
+          property: host
+      - key: DB_POSTGRESDB_PORT
+        fromService:
+          type: pserv
+          name: n8n-db
+          property: port
+      - key: DB_POSTGRESDB_USER
+        fromService:
+          type: pserv
+          name: n8n-db
+          property: databaseUser
+      - key: DB_POSTGRESDB_PASSWORD
+        fromService:
+          type: pserv
+          name: n8n-db
+          property: password
+      
+      # Variable importante de n8n para la URL
+      - key: WEBHOOK_URL
+        fromService:
+          type: web
+          name: n8n
+          property: url
+      
+      # ¡Ajusta tu zona horaria!
+      - key: GENERIC_TIMEZONE
+        value: America/Santiago
